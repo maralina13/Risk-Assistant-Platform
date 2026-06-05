@@ -1,0 +1,20 @@
+task mode: create
+primary deck-profile: engineering-platform
+secondary gates: product-platform narrative, defense/demo readiness
+required proof objects:
+- service decomposition and event-driven flow
+- Kubernetes/GitOps platform map
+- live validation evidence: nodes, ArgoCD, services, CI/CD, E2E
+- testing and observability proof
+source/asset requirements:
+- use local project docs only: README, criteria matrix, high-level scope, C4 diagrams, live validation report
+- no external logos or unverified brand assets
+brand authenticity constraints:
+- no pseudo logos; use project name as title text
+- use generic platform labels only
+profile-specific QA gates:
+- all architecture labels must be technically accurate
+- diagrams must show relationships, not decorative cards
+- live metrics must match docs/live-validation-report.md
+known missing inputs:
+- no official university template supplied; create a clean technical defense deck

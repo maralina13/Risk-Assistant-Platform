@@ -1,0 +1,18 @@
+10-slide plan with varied macro layouts:
+
+1. Cover with live proof rail.
+2. Problem-to-solution diagonal narrative.
+3. Criteria matrix heat strip.
+4. C4 L2 architecture map.
+5. Event-driven sequence lane.
+6. Kubernetes platform topology.
+7. Data and cache placement map.
+8. Observability and resilience evidence board.
+9. CI/CD and GitOps conveyor.
+10. Defense run order and commands.
+
+Layout guardrails:
+- no more than two card-grid slides
+- no three consecutive slides share the same macro layout
+- diagrams encode real relationships with directional arrows
+- keep text short enough for classroom projection
