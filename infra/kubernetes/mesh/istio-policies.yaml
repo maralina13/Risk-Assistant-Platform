@@ -1,0 +1,48 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: risk-assistant-default
+  namespace: risk-assistant
+spec:
+  host: "*.risk-assistant.svc.cluster.local"
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 20
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: report-service-retries
+  namespace: risk-assistant
+spec:
+  hosts:
+    - report-service
+    - report-service.risk-assistant.svc.cluster.local
+  http:
+    - retries:
+        attempts: 2
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      route:
+        - destination:
+            host: report-service
+            port:
+              number: 8093
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: risk-assistant-mtls
+  namespace: risk-assistant
+spec:
+  mtls:
+    mode: PERMISSIVE

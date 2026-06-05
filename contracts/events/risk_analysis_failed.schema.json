@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "risk_analysis_failed.schema.json",
+  "title": "RiskAnalysisFailed",
+  "type": "object",
+  "required": ["event_id", "event_type", "correlation_id", "created_at", "version", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "const": "RiskAnalysisFailed" },
+    "correlation_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "version": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["task_id", "error_code", "error_message", "retryable", "status"],
+      "properties": {
+        "task_id": { "type": "string" },
+        "error_code": { "type": "string" },
+        "error_message": { "type": "string" },
+        "retryable": { "type": "boolean" },
+        "status": { "const": "failed" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: risk-assistant-kaniko-build
+  namespace: cicd
+  labels:
+    app.kubernetes.io/name: risk-assistant-kaniko-build
+    app.kubernetes.io/part-of: risk-assistant
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: risk-assistant-kaniko-build
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.23.2-debug
+          args:
+            - --context=git://host.minikube.internal/risk-assistant.git#refs/heads/main
+            - --dockerfile=Dockerfile
+            - --destination=registry.kube-system.svc.cluster.local:80/risk-assistant:ci-demo
+            - --destination=registry.kube-system.svc.cluster.local:80/risk-assistant:latest
+            - --insecure
+            - --skip-tls-verify
+          env:
+            - name: GIT_SSL_NO_VERIFY
+              value: "true"
+          volumeMounts:
+            - name: kaniko-cache
+              mountPath: /cache
+      volumes:
+        - name: kaniko-cache
+          emptyDir: {}

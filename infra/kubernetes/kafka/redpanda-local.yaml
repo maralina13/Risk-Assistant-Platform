@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: risk-kafka
+  namespace: kafka
+  labels:
+    app.kubernetes.io/name: risk-kafka
+    app.kubernetes.io/part-of: risk-assistant
+spec:
+  serviceName: risk-kafka-bootstrap
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: risk-kafka
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: risk-kafka
+        app.kubernetes.io/part-of: risk-assistant
+    spec:
+      containers:
+        - name: redpanda
+          image: redpandadata/redpanda:v23.3.17
+          command:
+            - rpk
+            - redpanda
+            - start
+            - --overprovisioned
+            - --smp
+            - "1"
+            - --memory
+            - 512M
+            - --reserve-memory
+            - 0M
+            - --check=false
+            - --kafka-addr
+            - PLAINTEXT://0.0.0.0:9092
+            - --advertise-kafka-addr
+            - PLAINTEXT://risk-kafka-bootstrap.kafka.svc.cluster.local:9092
+          ports:
+            - name: kafka
+              containerPort: 9092
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-kafka-bootstrap
+  namespace: kafka
+  labels:
+    app.kubernetes.io/name: risk-kafka
+    app.kubernetes.io/part-of: risk-assistant
+spec:
+  selector:
+    app.kubernetes.io/name: risk-kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: kafka

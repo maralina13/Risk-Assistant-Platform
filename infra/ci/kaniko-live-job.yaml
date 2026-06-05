@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: risk-assistant-kaniko-live
+  namespace: cicd
+  labels:
+    app.kubernetes.io/name: risk-assistant-kaniko-live
+    app.kubernetes.io/part-of: risk-assistant
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: risk-assistant-kaniko-live
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: fetch-context
+          image: curlimages/curl:8.10.1
+          args:
+            - -fsSL
+            - -o
+            - /workspace/context.tar.gz
+            - http://host.minikube.internal:18081/context.tar.gz
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.23.2-debug
+          args:
+            - --context=tar:///workspace/context.tar.gz
+            - --dockerfile=Dockerfile
+            - --destination=cicd-registry.cicd.svc.cluster.local:5000/risk-assistant:ci-kaniko-live
+            - --destination=cicd-registry.cicd.svc.cluster.local:5000/risk-assistant:latest
+            - --insecure
+            - --skip-tls-verify
+            - --cache=true
+            - --cache-repo=cicd-registry.cicd.svc.cluster.local:5000/risk-assistant/cache
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: kaniko-cache
+              mountPath: /cache
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: kaniko-cache
+          emptyDir: {}

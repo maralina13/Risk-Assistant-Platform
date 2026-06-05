@@ -1,0 +1,89 @@
+asyncapi: 2.6.0
+info:
+  title: Multi-Agent Project Risk Assistant Events
+  version: 1.0.0
+  description: Kafka event contract for asynchronous project risk analysis workflow.
+servers:
+  localKafka:
+    url: localhost:9092
+    protocol: kafka
+channels:
+  project-events:
+    publish:
+      operationId: publishProjectSubmitted
+      message:
+        $ref: "#/components/messages/ProjectSubmitted"
+  analysis-events:
+    subscribe:
+      operationId: consumeAnalysisEvents
+      message:
+        oneOf:
+          - $ref: "#/components/messages/RiskAnalysisStarted"
+          - $ref: "#/components/messages/RiskAnalysisCompleted"
+          - $ref: "#/components/messages/RiskAnalysisFailed"
+  report-events:
+    subscribe:
+      operationId: consumeReportGenerated
+      message:
+        $ref: "#/components/messages/ReportGenerated"
+  audit-events:
+    subscribe:
+      operationId: consumeAuditEvents
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ProjectSubmitted"
+          - $ref: "#/components/messages/RiskAnalysisStarted"
+          - $ref: "#/components/messages/RiskAnalysisCompleted"
+          - $ref: "#/components/messages/RiskAnalysisFailed"
+          - $ref: "#/components/messages/ReportGenerated"
+          - $ref: "#/components/messages/NotificationSent"
+components:
+  messages:
+    ProjectSubmitted:
+      name: ProjectSubmitted
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+    RiskAnalysisStarted:
+      name: RiskAnalysisStarted
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+    RiskAnalysisCompleted:
+      name: RiskAnalysisCompleted
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+    RiskAnalysisFailed:
+      name: RiskAnalysisFailed
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+    ReportGenerated:
+      name: ReportGenerated
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+    NotificationSent:
+      name: NotificationSent
+      payload:
+        $ref: "#/components/schemas/BaseEvent"
+  schemas:
+    BaseEvent:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - correlation_id
+        - created_at
+        - version
+        - payload
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        correlation_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+        payload:
+          type: object

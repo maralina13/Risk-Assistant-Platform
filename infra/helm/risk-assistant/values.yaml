@@ -1,0 +1,86 @@
+image:
+  repository: localhost:5000/risk-assistant
+  tag: latest
+  pullPolicy: IfNotPresent
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+global:
+  kafkaBootstrapServers: risk-kafka-bootstrap.kafka.svc.cluster.local:9092
+  postgresDsn: postgresql://risk_user:risk_password@postgresql:5432/risk_assistant
+  mongoUri: mongodb://mongodb:27017
+  redisUrl: redis://valkey:6379/0
+
+services:
+  api-gateway:
+    command: ["python", "-m", "services.api_gateway.main"]
+    port: 8088
+    replicas: 2
+    minAvailable: 1
+    env:
+      PROJECT_INTAKE_URL: http://project-intake-service:8091
+      REPORT_SERVICE_URL: http://report-service:8093
+      AUDIT_SERVICE_URL: http://audit-service:8094
+  project-intake-service:
+    command: ["python", "-m", "services.project_intake_service.main"]
+    port: 8091
+    replicas: 2
+    minAvailable: 1
+    env:
+      RISK_ANALYSIS_URL: http://risk-analysis-service:8092
+      AUTO_PROCESS: "false"
+  risk-analysis-service:
+    command: ["python", "-m", "services.risk_analysis_service.main"]
+    port: 8092
+    replicas: 2
+    minAvailable: 1
+    env:
+      LLM_MODE: mock
+  report-service:
+    command: ["python", "-m", "services.report_service.main"]
+    port: 8093
+    replicas: 2
+    minAvailable: 1
+    env: {}
+  audit-service:
+    command: ["python", "-m", "services.audit_service.main"]
+    port: 8094
+    replicas: 1
+    minAvailable: 0
+    env: {}
+  notification-service:
+    command: ["python", "-m", "services.notification_service.main"]
+    port: 8095
+    replicas: 1
+    minAvailable: 0
+    env: {}
+
+postgresql:
+  enabled: true
+  image: postgres:16-alpine
+
+mongodb:
+  enabled: true
+  image: mongo:7
+
+valkey:
+  enabled: true
+  image: valkey/valkey:8-alpine
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+
+networkPolicy:
+  enabled: true

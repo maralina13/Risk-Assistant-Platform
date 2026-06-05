@@ -1,0 +1,151 @@
+services:
+  # Kafka-compatible broker. Redpanda is lighter than full Kafka for local demo,
+  # but conceptually it exposes Kafka API and can be explained as Kafka layer.
+  kafka:
+    image: redpandadata/redpanda:latest
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://kafka:9092
+    ports:
+      - "9092:9092"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: risk_assistant
+      POSTGRES_USER: risk_user
+      POSTGRES_PASSWORD: risk_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/postgres/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: valkey/valkey:8-alpine
+    ports:
+      - "6379:6379"
+
+  load-balancer:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build: .
+    command: ["python", "-m", "services.api_gateway.main"]
+    environment:
+      SERVICE_NAME: api-gateway
+      PROJECT_INTAKE_URL: http://project-intake-service:8091
+      REPORT_SERVICE_URL: http://report-service:8093
+      AUDIT_SERVICE_URL: http://audit-service:8094
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8088:8088"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - project-intake-service
+      - report-service
+      - redis
+
+  project-intake-service:
+    build: .
+    command: ["python", "-m", "services.project_intake_service.main"]
+    environment:
+      SERVICE_NAME: project-intake-service
+      RISK_ANALYSIS_URL: http://risk-analysis-service:8092
+      AUTO_PROCESS: "false"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      POSTGRES_DSN: postgresql://risk_user:risk_password@postgres:5432/risk_assistant
+    ports:
+      - "8091:8091"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - kafka
+      - postgres
+
+  risk-analysis-service:
+    build: .
+    command: ["python", "-m", "services.risk_analysis_service.main"]
+    environment:
+      SERVICE_NAME: risk-analysis-service
+      LLM_MODE: mock
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MONGO_URI: mongodb://mongo:27017
+      POSTGRES_DSN: postgresql://risk_user:risk_password@postgres:5432/risk_assistant
+    ports:
+      - "8092:8092"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - kafka
+
+  report-service:
+    build: .
+    command: ["python", "-m", "services.report_service.main"]
+    environment:
+      SERVICE_NAME: report-service
+      MONGO_URI: mongodb://mongo:27017
+    ports:
+      - "8093:8093"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - kafka
+      - mongo
+      - redis
+
+  audit-service:
+    build: .
+    command: ["python", "-m", "services.audit_service.main"]
+    environment:
+      SERVICE_NAME: audit-service
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MONGO_URI: mongodb://mongo:27017
+    ports:
+      - "8094:8094"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - kafka
+      - mongo
+
+  notification-service:
+    build: .
+    command: ["python", "-m", "services.notification_service.main"]
+    environment:
+      SERVICE_NAME: notification-service
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8095:8095"
+    volumes:
+      - runtime-data:/app/runtime
+    depends_on:
+      - kafka
+
+volumes:
+  runtime-data:

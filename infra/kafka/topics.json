@@ -1,0 +1,28 @@
+{
+  "topics": [
+    {
+      "name": "project-events",
+      "partitions": 3,
+      "retention_ms": 604800000,
+      "events": ["ProjectSubmitted"]
+    },
+    {
+      "name": "analysis-events",
+      "partitions": 3,
+      "retention_ms": 604800000,
+      "events": ["RiskAnalysisStarted", "RiskAnalysisCompleted", "RiskAnalysisFailed"]
+    },
+    {
+      "name": "report-events",
+      "partitions": 2,
+      "retention_ms": 604800000,
+      "events": ["ReportGenerated"]
+    },
+    {
+      "name": "audit-events",
+      "partitions": 2,
+      "retention_ms": 2592000000,
+      "events": ["AgentTraceCreated", "NotificationSent"]
+    }
+  ]
+}

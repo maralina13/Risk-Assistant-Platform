@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "risk_analysis_started.schema.json",
+  "title": "RiskAnalysisStarted",
+  "type": "object",
+  "required": ["event_id", "event_type", "correlation_id", "created_at", "version", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "const": "RiskAnalysisStarted" },
+    "correlation_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "version": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["task_id", "llm_mode", "status"],
+      "properties": {
+        "task_id": { "type": "string" },
+        "llm_mode": { "type": "string" },
+        "status": { "const": "running" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

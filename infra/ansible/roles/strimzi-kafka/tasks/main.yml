@@ -1,0 +1,26 @@
+- name: Ensure Kafka namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ strimzi_namespace }}"
+    state: present
+
+- name: Add Strimzi Helm repository
+  kubernetes.core.helm_repository:
+    name: strimzi
+    repo_url: "{{ strimzi_chart_repo }}"
+
+- name: Install Strimzi Kafka Operator
+  kubernetes.core.helm:
+    name: "{{ strimzi_release_name }}"
+    chart_ref: strimzi/strimzi-kafka-operator
+    release_namespace: "{{ strimzi_namespace }}"
+    create_namespace: true
+    wait: true
+
+- name: Apply Kafka cluster custom resource
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ strimzi_namespace }}"
+    template: kafka-cluster.yaml.j2
+

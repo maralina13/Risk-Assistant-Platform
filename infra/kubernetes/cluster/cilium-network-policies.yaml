@@ -1,0 +1,35 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: risk-assistant-default
+  namespace: risk-assistant
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: risk-assistant
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: istio-system
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: platform
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: risk-assistant
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kafka
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: observability
+    - toEntities:
+        - kube-apiserver
+        - world
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "443"
+              protocol: TCP
+

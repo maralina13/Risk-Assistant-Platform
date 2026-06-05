@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler-probe
+  namespace: platform
+  labels:
+    app.kubernetes.io/name: autoscaler-probe
+    app.kubernetes.io/part-of: risk-assistant-platform-demo
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: autoscaler-probe
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: autoscaler-probe
+        app.kubernetes.io/part-of: risk-assistant-platform-demo
+    spec:
+      nodeSelector:
+        autoscaler-demo: "true"
+      tolerations:
+        - key: kwok-provider
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+          resources:
+            requests:
+              cpu: "3500m"
+              memory: 256Mi
+            limits:
+              cpu: "3500m"
+              memory: 256Mi

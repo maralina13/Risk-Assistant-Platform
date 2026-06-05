@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: Multi-Agent Project Risk Assistant API
+  version: 1.0.0
+  description: API for submitting project descriptions, checking analysis status, and reading generated risk reports.
+servers:
+  - url: http://localhost:8088
+paths:
+  /projects/analyze:
+    post:
+      summary: Submit a project for risk analysis
+      operationId: submitProjectAnalysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectAnalysisRequest"
+      responses:
+        "202":
+          description: Analysis task accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAcceptedResponse"
+        "400":
+          description: Invalid request
+        "429":
+          description: Too many requests
+  /tasks/{task_id}/status:
+    get:
+      summary: Get analysis task status
+      operationId: getTaskStatus
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current task status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskStatusResponse"
+        "404":
+          description: Task not found
+  /reports/{task_id}:
+    get:
+      summary: Get generated report by task id
+      operationId: getReport
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Generated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "404":
+          description: Report not found
+  /admin/audit/events:
+    get:
+      summary: Get recent event log
+      operationId: getAuditEvents
+      responses:
+        "200":
+          description: Recent events
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - events
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+components:
+  schemas:
+    ProjectAnalysisRequest:
+      type: object
+      required:
+        - project_title
+        - project_description
+      properties:
+        project_title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        project_description:
+          type: string
+          minLength: 30
+          maxLength: 6000
+        user_id:
+          type: string
+          nullable: true
+    TaskAcceptedResponse:
+      type: object
+      required:
+        - task_id
+        - status
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          example: pending
+    TaskStatusResponse:
+      type: object
+      required:
+        - task_id
+        - status
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - completed
+            - failed
+        report_id:
+          type: string
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+    ReportResponse:
+      type: object
+      required:
+        - task_id
+        - format
+        - report
+      properties:
+        task_id:
+          type: string
+        format:
+          type: string
+          example: markdown
+        report:
+          type: string

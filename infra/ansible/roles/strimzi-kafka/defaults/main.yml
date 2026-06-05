@@ -1,0 +1,9 @@
+strimzi_namespace: kafka
+strimzi_release_name: strimzi-kafka-operator
+strimzi_chart_repo: https://strimzi.io/charts/
+kafka_cluster_name: risk-kafka
+kafka_replicas: 3
+kafka_storage_size: 10Gi
+zookeeper_replicas: 3
+zookeeper_storage_size: 5Gi
+

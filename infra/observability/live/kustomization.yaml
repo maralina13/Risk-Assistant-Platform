@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: observability
+resources:
+  - ../otel-collector.yaml
+  - ../loki-local.yaml
+  - ../tempo-local.yaml
+  - ../prometheus-rules.yaml
+configMapGenerator:
+  - name: risk-assistant-grafana-dashboard
+    files:
+      - risk-assistant-dashboard.json=../dashboards/risk-assistant-dashboard.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+generatorOptions:
+  disableNameSuffixHash: true

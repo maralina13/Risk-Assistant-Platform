@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: risk-assistant-alerts
+  namespace: observability
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: risk-assistant.rules
+      rules:
+        - alert: HighGatewayErrorRate
+          expr: sum(rate(istio_requests_total{destination_service_name="api-gateway",response_code=~"5.."}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "API Gateway returns too many 5xx responses"
+        - alert: RateLimiterTriggered
+          expr: sum(rate(istio_requests_total{destination_service_name="api-gateway",response_code="429"}[5m])) > 0
+          for: 2m
+          labels:
+            severity: info
+          annotations:
+            summary: "Rate limiter is actively rejecting requests"
+        - alert: KafkaConsumerLagHigh
+          expr: kafka_consumergroup_lag > 100
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Kafka consumer lag is high"

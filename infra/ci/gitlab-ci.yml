@@ -1,0 +1,50 @@
+stages:
+  - test
+  - build
+  - publish
+  - deploy
+
+variables:
+  IMAGE_NAME: "$CI_REGISTRY_IMAGE/risk-assistant"
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+  HELM_VALUES_FILE: "infra/helm/risk-assistant/values.yaml"
+
+unit-tests:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - pip install -r requirements.txt
+    - pytest -q
+
+build-image-kaniko:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Dockerfile"
+      --destination "$IMAGE_NAME:$IMAGE_TAG"
+      --destination "$IMAGE_NAME:latest"
+
+update-helm-chart:
+  stage: publish
+  image: alpine:3.20
+  script:
+    - apk add --no-cache yq git
+    - yq -i ".image.repository = \"$IMAGE_NAME\" | .image.tag = \"$IMAGE_TAG\"" "$HELM_VALUES_FILE"
+    - git config user.email "ci@example.local"
+    - git config user.name "GitLab CI"
+    - git add "$HELM_VALUES_FILE"
+    - git commit -m "ci: update image tag to $IMAGE_TAG" || true
+    - git push origin "HEAD:$CI_COMMIT_BRANCH" || true
+
+argocd-sync:
+  stage: deploy
+  image: argoproj/argocd:v2.11.3
+  script:
+    - argocd login "$ARGOCD_SERVER" --username "$ARGOCD_USERNAME" --password "$ARGOCD_PASSWORD" --insecure
+    - argocd app sync risk-assistant
+    - argocd app wait risk-assistant --health --timeout 300
+

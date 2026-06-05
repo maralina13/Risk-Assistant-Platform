@@ -1,0 +1,80 @@
+{
+  "title": "Risk Assistant Platform",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Gateway request rate",
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name=\"api-gateway\"}[5m])) by (response_code) or sum(up{namespace=\"risk-assistant\",service=\"api-gateway\"})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "P95 latency by service",
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{destination_workload_namespace=\"risk-assistant\"}[5m])) by (le, destination_service_name)) or avg(scrape_duration_seconds{namespace=\"risk-assistant\"}) by (service)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Kafka consumer lag",
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kafka_consumergroup_lag) by (consumergroup, topic) or vector(0)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Rate limiter rejections",
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name=\"api-gateway\",response_code=\"429\"}[5m])) or vector(0)"
+        }
+      ]
+    }
+  ]
+}

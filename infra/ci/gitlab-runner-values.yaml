@@ -1,0 +1,30 @@
+gitlabUrl: https://gitlab.com
+runnerToken: "glrt-7cvmQ8qVvgOPLANhXCjpIWM6MQpvOjEKcDoxZDdnYTEKdDozCnU6bWppZGQc.01.1o1u5t0m0"
+serviceAccount:
+  create: true
+  name: gitlab-runner
+rbac:
+  create: true
+runners:
+  name: risk-assistant-local-runner
+  tags: "local,kubernetes,kaniko"
+  privileged: true
+  config: |
+    [[runners]]
+      executor = "kubernetes"
+      [runners.kubernetes]
+        namespace = "cicd"
+        privileged = true
+        image = "alpine:3.20"
+        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-latest"
+        poll_timeout = 600
+      [runners.cache]
+        Type = "s3"
+        Shared = false
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

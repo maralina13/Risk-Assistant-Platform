@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: risk-assistant
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git://host.minikube.internal/risk-assistant.git
+    targetRevision: HEAD
+    path: infra/helm/risk-assistant
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: localhost:5000/risk-assistant
+        - name: image.tag
+          value: ci-final-demo
+        - name: serviceMonitor.enabled
+          value: "true"
+        - name: networkPolicy.enabled
+          value: "false"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: risk-assistant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

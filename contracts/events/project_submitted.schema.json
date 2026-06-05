@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project_submitted.schema.json",
+  "title": "ProjectSubmitted",
+  "type": "object",
+  "required": ["event_id", "event_type", "correlation_id", "created_at", "version", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "const": "ProjectSubmitted" },
+    "correlation_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "version": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "required": ["task_id", "project_description", "status"],
+      "properties": {
+        "task_id": { "type": "string" },
+        "user_id": { "type": ["string", "null"] },
+        "project_title": { "type": ["string", "null"] },
+        "project_description": { "type": "string" },
+        "status": { "const": "pending" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
